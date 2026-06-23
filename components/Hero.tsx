@@ -2,23 +2,20 @@ import Link from 'next/link'
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden">
-      {/* Background image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage:
-            'url("https://imgix.cosmicjs.com/70d6cd90-6f48-11f1-b7fe-27b51f9bc579-autopilot-photo-1542291026-7eec264c27ff-1782249234603.jpeg")'
-        }}
-      />
-      {/* Dark overlay for readability */}
+    <section
+      className="relative overflow-hidden"
+      style={{
+        backgroundImage: 'url(https://imgix.cosmicjs.com/70d6cd90-6f48-11f1-b7fe-27b51f9bc579-autopilot-photo-1542291026-7eec264c27ff-1782249234603.jpeg)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
       <div className="absolute inset-0 bg-black/50" />
-
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center">
         <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight">
           Find Something You Love
         </h1>
-        <p className="mt-5 max-w-2xl mx-auto text-lg text-white/90">
+        <p className="mt-5 max-w-2xl mx-auto text-lg text-white/80">
           Discover quality products, explore curated categories, and shop with confidence
           backed by real customer reviews.
         </p>
