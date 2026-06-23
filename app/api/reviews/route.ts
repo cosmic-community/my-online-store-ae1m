@@ -1,4 +1,3 @@
-// app/api/reviews/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { createBucketClient } from '@cosmicjs/sdk'
 
@@ -31,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Look up the product by slug to get its ID
-    let productObject
+    let productObject: { id: string; title: string; slug: string } | undefined
     try {
       const res = await cosmic.objects
         .findOne({ type: 'products', slug: product_slug })
@@ -41,10 +40,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Product not found.' }, { status: 404 })
     }
 
+    if (!productObject || !productObject.id) {
+      return NextResponse.json({ error: 'Product not found.' }, { status: 404 })
+    }
+
     // Build a URL-friendly title slug
     const titleSlug = `review-${product_slug}-${Date.now()}`
 
     // Create the review object in Cosmic (published so it is immediately visible)
+    // IMPORTANT: The `product` metafield is an object relationship — it must be
+    // set using the product's ID, NOT its slug.
     const newReview = await cosmic.objects.insertOne({
       title: `Review by ${reviewer_name.trim()} for ${productObject.title}`,
       slug: titleSlug,
@@ -56,7 +61,7 @@ export async function POST(request: NextRequest) {
         review_title: review_title?.trim() || '',
         review_text: review_text?.trim() || '',
         verified_purchase: false,
-        product: product_slug,
+        product: productObject.id,
       },
     })
 
