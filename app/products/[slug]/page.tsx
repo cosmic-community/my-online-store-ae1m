@@ -8,6 +8,7 @@ import InventoryBadge from '@/components/InventoryBadge'
 import VariantList from '@/components/VariantList'
 import ReviewCard from '@/components/ReviewCard'
 import StarRating from '@/components/StarRating'
+import ReviewForm from '@/components/ReviewForm'
 
 export default async function ProductPage({
   params,
@@ -136,16 +137,29 @@ export default async function ProductPage({
 
       {/* Reviews */}
       <section className="mt-16">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Customer Reviews</h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Customer Reviews
+            {reviews.length > 0 && (
+              <span className="ml-3 text-base font-normal text-gray-500">
+                ({reviews.length} review{reviews.length === 1 ? '' : 's'})
+              </span>
+            )}
+          </h2>
+        </div>
+
         {reviews.length === 0 ? (
-          <p className="text-gray-500">No reviews yet for this product.</p>
+          <p className="text-gray-500">No reviews yet — be the first to share your experience!</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             {reviews.map((review) => (
               <ReviewCard key={review.id} review={review} />
             ))}
           </div>
         )}
+
+        {/* Review submission form */}
+        <ReviewForm productSlug={slug} />
       </section>
     </div>
   )
