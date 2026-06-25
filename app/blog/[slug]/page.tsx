@@ -4,9 +4,6 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 
 // ── Block renderer ─────────────────────────────────────────────────────────
-// Replaces {{block-name /}} tokens with a styled product-spotlight card.
-// The block content is stored in the CMS; here we do a simple token strip
-// and let the rich prose render. For a richer experience, extend this map.
 const BLOCK_DISPLAY_NAMES: Record<string, { emoji: string; label: string }> = {
   'product-spotlight-alpine-wallet': { emoji: '👜', label: 'Alpine Slim Leather Wallet — $59.99' },
   'product-spotlight-prosound-headphones': { emoji: '🎧', label: 'ProSound Elite Headphones — $149.99' },
@@ -14,7 +11,6 @@ const BLOCK_DISPLAY_NAMES: Record<string, { emoji: string; label: string }> = {
 }
 
 function renderContent(raw: string): string {
-  // Replace block tokens with inline HTML callout boxes
   return raw.replace(/\{\{([\w-]+)\s*\/\}\}/g, (_match, name) => {
     const block = BLOCK_DISPLAY_NAMES[name]
     if (!block) return ''
@@ -135,7 +131,6 @@ export default async function BlogPostPage(
             width={1200}
             height={630}
             className="w-full object-cover"
-            priority
           />
         </figure>
       )}
