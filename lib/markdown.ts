@@ -47,18 +47,6 @@ export function markdownToHtml(md: string): string {
       // Detect alignment separator row (e.g. |---|:---:|---:|)
       const isSeparator = (row: string) => /^\|[\s\-:|]+\|$/.test(row)
 
-      let headerRow: string | undefined
-      let bodyRows: string[]
-
-      if (rows.length >= 2 && isSeparator(rows[1])) {
-        headerRow = rows[0]
-        bodyRows = rows.slice(2)
-      } else {
-        // No recognised separator — treat all rows as body
-        headerRow = undefined
-        bodyRows = rows
-      }
-
       const parseRow = (row: string, tag: 'th' | 'td') =>
         '<tr>' +
         row
@@ -70,12 +58,20 @@ export function markdownToHtml(md: string): string {
         '</tr>'
 
       let tableHtml = '<table>\n'
-      if (headerRow) {
+
+      if (rows.length >= 2 && isSeparator(rows[1])) {
+        // First row is the header, rows after separator are body
+        const headerRow: string = rows[0]
+        const bodyRows: string[] = rows.slice(2)
         tableHtml += `<thead>\n${parseRow(headerRow, 'th')}\n</thead>\n`
+        if (bodyRows.length > 0) {
+          tableHtml += '<tbody>\n' + bodyRows.map((r: string) => parseRow(r, 'td')).join('\n') + '\n</tbody>\n'
+        }
+      } else {
+        // No recognised separator — treat all rows as body
+        tableHtml += '<tbody>\n' + rows.map((r: string) => parseRow(r, 'td')).join('\n') + '\n</tbody>\n'
       }
-      if (bodyRows.length > 0) {
-        tableHtml += '<tbody>\n' + bodyRows.map((r: string) => parseRow(r, 'td')).join('\n') + '\n</tbody>\n'
-      }
+
       tableHtml += '</table>'
       return tableHtml
     }
