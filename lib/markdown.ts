@@ -8,7 +8,7 @@ export function markdownToHtml(md: string): string {
 
   // Escape HTML entities in code spans first (protect them from further processing)
   const codeSpans: string[] = []
-  html = html.replace(/`([^`]+)`/g, (_m, code) => {
+  html = html.replace(/`([^`]+)`/g, (_m: string, code: string) => {
     codeSpans.push(`<code>${escapeHtml(code)}</code>`)
     return `%%CODE_${codeSpans.length - 1}%%`
   })
@@ -32,31 +32,31 @@ export function markdownToHtml(md: string): string {
   html = html.replace(/_(.+?)_/g, '<em>$1</em>')
 
   // Unordered lists (lines starting with - or *)
-  html = html.replace(/((?:^[\-\*]\s+.+$\n?)+)/gm, (block) => {
+  html = html.replace(/((?:^[\-\*]\s+.+$\n?)+)/gm, (block: string) => {
     const items = block
       .trim()
       .split('\n')
-      .map((line) => `<li>${line.replace(/^[\-\*]\s+/, '')}</li>`)
+      .map((line: string) => `<li>${line.replace(/^[\-\*]\s+/, '')}</li>`)
       .join('\n')
     return `<ul>\n${items}\n</ul>\n`
   })
 
   // Ordered lists (lines starting with 1. 2. etc.)
-  html = html.replace(/((?:^\d+\.\s+.+$\n?)+)/gm, (block) => {
+  html = html.replace(/((?:^\d+\.\s+.+$\n?)+)/gm, (block: string) => {
     const items = block
       .trim()
       .split('\n')
-      .map((line) => `<li>${line.replace(/^\d+\.\s+/, '')}</li>`)
+      .map((line: string) => `<li>${line.replace(/^\d+\.\s+/, '')}</li>`)
       .join('\n')
     return `<ol>\n${items}\n</ol>\n`
   })
 
   // Blockquote
-  html = html.replace(/((?:^>\s*.+$\n?)+)/gm, (block) => {
+  html = html.replace(/((?:^>\s*.+$\n?)+)/gm, (block: string) => {
     const inner = block
       .trim()
       .split('\n')
-      .map((line) => line.replace(/^>\s*/, ''))
+      .map((line: string) => line.replace(/^>\s*/, ''))
       .join('\n')
     return `<blockquote>\n${inner}\n</blockquote>\n`
   })
@@ -91,7 +91,7 @@ export function markdownToHtml(md: string): string {
   html = paragraphed.join('\n')
 
   // Restore code spans
-  html = html.replace(/%%CODE_(\d+)%%/g, (_m, i) => codeSpans[parseInt(i)])
+  html = html.replace(/%%CODE_(\d+)%%/g, (_m: string, i: string) => codeSpans[parseInt(i)] ?? '')
 
   return html
 }
