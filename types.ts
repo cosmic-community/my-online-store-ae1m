@@ -68,6 +68,24 @@ export interface Review extends CosmicObject {
   };
 }
 
+export interface BlogPost extends CosmicObject {
+  type: 'blog-posts';
+  metadata: {
+    meta_title?: string;
+    meta_description?: string;
+    focus_keyword?: string;
+    canonical_url?: string;
+    featured_image?: CosmicImage;
+    featured_image_alt?: string;
+    excerpt?: string;
+    author?: string;
+    category?: string;
+    tags?: string;
+    reading_time_minutes?: number;
+    content?: string;
+  };
+}
+
 // API response shape
 export interface CosmicResponse<T> {
   objects: T[];
@@ -83,4 +101,8 @@ export function isProduct(obj: CosmicObject): obj is Product {
 
 export function isCategory(obj: CosmicObject): obj is Category {
   return obj.type === 'categories';
+}
+
+export function isBlogPost(obj: CosmicObject): obj is BlogPost {
+  return obj.type === 'blog-posts';
 }

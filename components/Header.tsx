@@ -19,6 +19,9 @@ export default function Header() {
             <Link href="/reviews" className="text-sm font-medium text-gray-700 hover:text-brand-600 transition-colors">
               Reviews
             </Link>
+            <Link href="/blog" className="text-sm font-medium text-gray-700 hover:text-brand-600 transition-colors">
+              Blog
+            </Link>
           </nav>
         </div>
       </div>
