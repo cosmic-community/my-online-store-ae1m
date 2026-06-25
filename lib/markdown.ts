@@ -1,6 +1,6 @@
 /**
  * Lightweight markdown-to-HTML converter.
- * Handles headings, bold, italic, lists, paragraphs, and inline code.
+ * Handles headings, bold, italic, lists, tables, blockquotes, paragraphs, and inline code.
  * No external dependencies required.
  */
 export function markdownToHtml(md: string): string {
@@ -30,6 +30,56 @@ export function markdownToHtml(md: string): string {
   html = html.replace(/\*(.+?)\*/g, '<em>$1</em>')
   html = html.replace(/__(.+?)__/g, '<strong>$1</strong>')
   html = html.replace(/_(.+?)_/g, '<em>$1</em>')
+
+  // Tables — must run before list/paragraph processing
+  // Matches a header row, an alignment row (|---|), and one or more data rows
+  html = html.replace(
+    /((?:^\|.+\|\s*$\n?)+)/gm,
+    (block: string) => {
+      const rows = block
+        .trim()
+        .split('\n')
+        .map((r: string) => r.trim())
+        .filter((r: string) => r.length > 0)
+
+      if (rows.length < 2) return block // not a valid table
+
+      // Detect alignment separator row (e.g. |---|:---:|---:|)
+      const isSeparator = (row: string) => /^\|[\s\-:|]+\|$/.test(row)
+
+      const parseRow = (row: string, tag: 'th' | 'td') =>
+        '<tr>' +
+        row
+          .replace(/^\|/, '')
+          .replace(/\|$/, '')
+          .split('|')
+          .map((cell: string) => `<${tag}>${cell.trim()}</${tag}>`)
+          .join('') +
+        '</tr>'
+
+      let tableHtml = '<table>\n'
+
+      // Capture into locals so TypeScript can narrow away `undefined`
+      // (project uses noUncheckedIndexedAccess, so rows[n] is string | undefined)
+      const headerRow = rows[0]
+      const separatorRow = rows[1]
+
+      if (headerRow && separatorRow && isSeparator(separatorRow)) {
+        // First row is the header, rows after separator are body
+        const bodyRows: string[] = rows.slice(2)
+        tableHtml += `<thead>\n${parseRow(headerRow, 'th')}\n</thead>\n`
+        if (bodyRows.length > 0) {
+          tableHtml += '<tbody>\n' + bodyRows.map((r: string) => parseRow(r, 'td')).join('\n') + '\n</tbody>\n'
+        }
+      } else {
+        // No recognised separator — treat all rows as body
+        tableHtml += '<tbody>\n' + rows.map((r: string) => parseRow(r, 'td')).join('\n') + '\n</tbody>\n'
+      }
+
+      tableHtml += '</table>'
+      return tableHtml
+    }
+  )
 
   // Unordered lists (lines starting with - or *)
   html = html.replace(/((?:^[\-\*]\s+.+$\n?)+)/gm, (block: string) => {
@@ -68,7 +118,8 @@ export function markdownToHtml(md: string): string {
   html = html.replace(/!\[([^\]]*)]\(([^)]+)\)/g, '<img src="$2" alt="$1" />')
 
   // Paragraphs — wrap lines that are not already block elements
-  const blockTags = /^<(h[1-6]|ul|ol|li|blockquote|hr|pre|div|figure|table)/
+  // Match both opening AND closing tags so we don't wrap stray closing tags
+  const blockTags = /^<\/?(?:h[1-6]|ul|ol|li|blockquote|hr|pre|div|figure|table|thead|tbody|tr|th|td)/
   const lines = html.split('\n')
   const paragraphed: string[] = []
   let buffer: string[] = []
