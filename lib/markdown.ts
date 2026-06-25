@@ -117,28 +117,23 @@ export function markdownToHtml(md: string): string {
   // Images ![alt](url)
   html = html.replace(/!\[([^\]]*)]\(([^)]+)\)/g, '<img src="$2" alt="$1" />')
 
-  // Paragraphs — wrap lines that are not already block elements
-  // Match both opening AND closing tags so we don't wrap stray closing tags
+  // Paragraphs — wrap lines that are not already block elements.
+  // Each non-empty text line becomes its own <p> (source authors use single
+  // newlines between paragraphs, not blank lines), so authored line breaks
+  // are preserved as distinct paragraphs with proper spacing.
   const blockTags = /^<\/?(?:h[1-6]|ul|ol|li|blockquote|hr|pre|div|figure|table|thead|tbody|tr|th|td)/
   const lines = html.split('\n')
   const paragraphed: string[] = []
-  let buffer: string[] = []
 
-  const flushBuffer = () => {
-    const text = buffer.join(' ').trim()
-    if (text) paragraphed.push(`<p>${text}</p>`)
-    buffer = []
-  }
-
-  for (const line of lines) {
-    if (blockTags.test(line.trim()) || line.trim() === '') {
-      flushBuffer()
-      if (line.trim()) paragraphed.push(line)
+  for (const rawLine of lines) {
+    const line = rawLine.trim()
+    if (line === '') continue
+    if (blockTags.test(line)) {
+      paragraphed.push(rawLine)
     } else {
-      buffer.push(line)
+      paragraphed.push(`<p>${line}</p>`)
     }
   }
-  flushBuffer()
   html = paragraphed.join('\n')
 
   // Restore code spans
