@@ -1,6 +1,7 @@
 import { getBlogPostBySlug, getBlogPosts } from '@/lib/cosmic'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
 
 // ── Block renderer ─────────────────────────────────────────────────────────
@@ -129,7 +130,7 @@ export default async function BlogPostPage(
       {/* Featured image */}
       {image && (
         <figure className="mb-10 rounded-2xl overflow-hidden shadow-md">
-          <img
+          <Image
             src={`${image.imgix_url}?w=1200&h=630&fit=crop&auto=format,compress`}
             alt={alt}
             width={1200}
