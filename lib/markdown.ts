@@ -59,9 +59,13 @@ export function markdownToHtml(md: string): string {
 
       let tableHtml = '<table>\n'
 
-      if (rows.length >= 2 && isSeparator(rows[1])) {
+      // Capture into locals so TypeScript can narrow away `undefined`
+      // (project uses noUncheckedIndexedAccess, so rows[n] is string | undefined)
+      const headerRow = rows[0]
+      const separatorRow = rows[1]
+
+      if (headerRow && separatorRow && isSeparator(separatorRow)) {
         // First row is the header, rows after separator are body
-        const headerRow: string = rows[0]
         const bodyRows: string[] = rows.slice(2)
         tableHtml += `<thead>\n${parseRow(headerRow, 'th')}\n</thead>\n`
         if (bodyRows.length > 0) {
