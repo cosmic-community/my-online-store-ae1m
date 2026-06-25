@@ -30,7 +30,7 @@ const PRODUCT_BLOCKS: Record<string, { emoji: string; label: string; price: stri
 function renderContent(raw: string): string {
   // 1. Extract block tokens before markdown processing so they aren't mangled
   const blockPlaceholders: string[] = []
-  const withPlaceholders = raw.replace(/\{\{([\w-]+)\s*\/\}\}/g, (_match, name) => {
+  const withPlaceholders = raw.replace(/\{\{([\w-]+)\s*\/\}\}/g, (_match, name: string) => {
     const product = PRODUCT_BLOCKS[name]
     if (!product) return ''
     const html = `<div class="my-8 rounded-2xl border border-brand-200 bg-brand-50 p-6 flex items-center gap-4 not-prose">
@@ -48,7 +48,7 @@ function renderContent(raw: string): string {
   let html = markdownToHtml(withPlaceholders)
 
   // 3. Restore product block HTML
-  html = html.replace(/%%BLOCK_(\d+)%%/g, (_m, i) => blockPlaceholders[parseInt(i)])
+  html = html.replace(/%%BLOCK_(\d+)%%/g, (_m: string, i: string) => blockPlaceholders[parseInt(i)] ?? '')
 
   return html
 }
@@ -72,7 +72,7 @@ export async function generateMetadata(
   const image = post.metadata?.featured_image
   const imageUrl = image?.imgix_url
     ? `${image.imgix_url}?w=1200&h=630&fit=crop&auto=format`
-    : image?.url || ''
+    : image?.url ?? ''
 
   return {
     title: `${metaTitle} | My Online Store`,
@@ -103,21 +103,21 @@ export default async function BlogPostPage(
 
   const image = post.metadata?.featured_image
   // Safely resolve the image URL whether the SDK returns a CosmicImage object or a plain string
-  const imageUrl = image?.imgix_url
+  const imageUrl: string | null = image?.imgix_url
     ? `${image.imgix_url}?w=1200&h=630&fit=crop&auto=format,compress`
     : image?.url
       ? `${image.url}?w=1200&h=630&fit=crop&auto=format,compress`
       : null
 
-  const alt = post.metadata?.featured_image_alt || post.title
-  const author = post.metadata?.author || ''
-  const category = post.metadata?.category || ''
+  const alt: string = post.metadata?.featured_image_alt ?? post.title ?? ''
+  const author: string = post.metadata?.author ?? ''
+  const category: string = post.metadata?.category ?? ''
   const readingTime = post.metadata?.reading_time_minutes
-  const focusKeyword = post.metadata?.focus_keyword || ''
-  const tags = post.metadata?.tags
+  const focusKeyword: string = post.metadata?.focus_keyword ?? ''
+  const tags: string[] = post.metadata?.tags
     ? post.metadata.tags.split(',').map((t: string) => t.trim())
     : []
-  const rawContent = post.metadata?.content || ''
+  const rawContent: string = post.metadata?.content ?? ''
   const htmlContent = renderContent(rawContent)
 
   const publishDate = new Date(post.created_at).toLocaleDateString('en-US', {
