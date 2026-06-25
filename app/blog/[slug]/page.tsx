@@ -1,27 +1,56 @@
 import { getBlogPostBySlug, getBlogPosts } from '@/lib/cosmic'
+import { markdownToHtml } from '@/lib/markdown'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
-// ── Block renderer ─────────────────────────────────────────────────────────
-const BLOCK_DISPLAY_NAMES: Record<string, { emoji: string; label: string }> = {
-  'product-spotlight-alpine-wallet': { emoji: '👜', label: 'Alpine Slim Leather Wallet — $59.99' },
-  'product-spotlight-prosound-headphones': { emoji: '🎧', label: 'ProSound Elite Headphones — $149.99' },
-  'product-spotlight-leather-weekender': { emoji: '🧳', label: 'Leather Weekender Bag — $249.00' },
+// ── Product block config — maps token name → { label, price, slug } ────────
+const PRODUCT_BLOCKS: Record<string, { emoji: string; label: string; price: string; slug: string }> = {
+  'product-spotlight-alpine-wallet': {
+    emoji: '👜',
+    label: 'Alpine Slim Leather Wallet',
+    price: '$59.99',
+    slug: 'alpine-slim-leather-wallet',
+  },
+  'product-spotlight-prosound-headphones': {
+    emoji: '🎧',
+    label: 'ProSound Elite Wireless Headphones',
+    price: '$149.99',
+    slug: 'prosound-elite-wireless-headphones',
+  },
+  'product-spotlight-leather-weekender': {
+    emoji: '🧳',
+    label: 'Leather Weekender Bag',
+    price: '$249.00',
+    slug: 'leather-weekender-bag',
+  },
 }
 
+// ── Block + markdown renderer ──────────────────────────────────────────────
 function renderContent(raw: string): string {
-  return raw.replace(/\{\{([\w-]+)\s*\/\}\}/g, (_match, name) => {
-    const block = BLOCK_DISPLAY_NAMES[name]
-    if (!block) return ''
-    return `<div class="my-8 rounded-2xl border border-brand-200 bg-brand-50 p-6 flex items-center gap-4 not-prose">
-      <span class="text-4xl">${block.emoji}</span>
+  // 1. Extract block tokens before markdown processing so they aren't mangled
+  const blockPlaceholders: string[] = []
+  const withPlaceholders = raw.replace(/\{\{([\w-]+)\s*\/\}\}/g, (_match, name) => {
+    const product = PRODUCT_BLOCKS[name]
+    if (!product) return ''
+    const html = `<div class="my-8 rounded-2xl border border-brand-200 bg-brand-50 p-6 flex items-center gap-4 not-prose">
+      <span class="text-4xl" role="img" aria-label="${product.label}">${product.emoji}</span>
       <div>
-        <p class="font-bold text-gray-900 text-lg">${block.label}</p>
-        <a href="/products" class="text-sm text-brand-600 hover:underline font-medium mt-1 inline-block">Shop Now →</a>
+        <p class="font-bold text-gray-900 text-lg">${product.label} — ${product.price}</p>
+        <a href="/products/${product.slug}" class="text-sm text-brand-600 hover:underline font-medium mt-1 inline-block">Shop Now →</a>
       </div>
     </div>`
+    blockPlaceholders.push(html)
+    return `%%BLOCK_${blockPlaceholders.length - 1}%%`
   })
+
+  // 2. Convert markdown to HTML
+  let html = markdownToHtml(withPlaceholders)
+
+  // 3. Restore product block HTML
+  html = html.replace(/%%BLOCK_(\d+)%%/g, (_m, i) => blockPlaceholders[parseInt(i)])
+
+  return html
 }
 
 // ── Static params ──────────────────────────────────────────────────────────
@@ -41,6 +70,9 @@ export async function generateMetadata(
   const metaTitle = post.metadata?.meta_title || post.title
   const metaDescription = post.metadata?.meta_description || post.metadata?.excerpt || ''
   const image = post.metadata?.featured_image
+  const imageUrl = image?.imgix_url
+    ? `${image.imgix_url}?w=1200&h=630&fit=crop&auto=format`
+    : image?.url || ''
 
   return {
     title: `${metaTitle} | My Online Store`,
@@ -50,7 +82,7 @@ export async function generateMetadata(
       title: metaTitle,
       description: metaDescription,
       type: 'article',
-      ...(image && { images: [{ url: `${image.imgix_url}?w=1200&h=630&fit=crop&auto=format` }] }),
+      ...(imageUrl && { images: [{ url: imageUrl }] }),
     },
     ...(post.metadata?.canonical_url && {
       alternates: { canonical: post.metadata.canonical_url },
@@ -70,6 +102,13 @@ export default async function BlogPostPage(
   if (!post) notFound()
 
   const image = post.metadata?.featured_image
+  // Safely resolve the image URL whether the SDK returns a CosmicImage object or a plain string
+  const imageUrl = image?.imgix_url
+    ? `${image.imgix_url}?w=1200&h=630&fit=crop&auto=format,compress`
+    : image?.url
+      ? `${image.url}?w=1200&h=630&fit=crop&auto=format,compress`
+      : null
+
   const alt = post.metadata?.featured_image_alt || post.title
   const author = post.metadata?.author || ''
   const category = post.metadata?.category || ''
@@ -123,10 +162,10 @@ export default async function BlogPostPage(
       </div>
 
       {/* Featured image */}
-      {image && (
+      {imageUrl && (
         <figure className="mb-10 rounded-2xl overflow-hidden shadow-md">
           <img
-            src={`${image.imgix_url}?w=1200&h=630&fit=crop&auto=format,compress`}
+            src={imageUrl}
             alt={alt}
             width={1200}
             height={630}
@@ -145,6 +184,7 @@ export default async function BlogPostPage(
           prose-a:text-brand-600 prose-a:no-underline hover:prose-a:underline
           prose-strong:text-gray-900
           prose-ul:my-4 prose-li:my-1
+          prose-ol:my-4
           prose-table:text-sm prose-th:bg-gray-50 prose-td:border prose-th:border"
         dangerouslySetInnerHTML={{ __html: htmlContent }}
       />
